@@ -1,27 +1,17 @@
 /* eslint-disable react-refresh/only-export-components */
 
+import { useActionData, useLoaderData } from "react-router-dom";
 import {
-  Form,
-  Link,
-  redirect,
-  useActionData,
-  useLoaderData,
-} from "react-router-dom";
-import {
-  createEmployee,
-  deleteEmployee,
+    createDepartment,
   getDepartments,
   getEmployees,
 } from "../api";
 import "@reach/dialog/styles.css";
-import CreateEmployeeModal from "../components/CreateEmployeeModal";
 import { useEffect, useState } from "react";
-import binIcon from "../assets/bin.svg";
-import editIcon from "../assets/edit.svg";
+import CreateDepartmentsModal from "../components/CreateDepartmentModal";
 import { checkAuthenticity } from "../api/auth";
 
 export async function loader() {
-  checkAuthenticity();
   const [employees, departments] = await Promise.all([
     getEmployees(),
     getDepartments(),
@@ -30,32 +20,18 @@ export async function loader() {
 }
 
 export async function action({ request }) {
+  checkAuthenticity();
   try {
     const formData = await request.formData();
-    const intent = formData.get("intent");
 
-    if (intent === "add") {
-      const name = formData.get("floating_name");
-      const departmentId = formData.get("floating_department");
-      const salary = parseInt(formData.get("floating_salary"), 10);
-      const employee = { name, departmentId, salary };
-      await createEmployee(employee);
-      return {
-        status: 302,
-        headers: { location: `/` },
-        modal: { show: false },
-      };
-    }
-    if (intent === "delete") {
-      const id = formData.get("id");
-      if (id) {
-        await deleteEmployee(id);
-        return redirect("/", { status: 302 });
-      } else {
-        alert("id is required");
-        return null;
-      }
-    }
+    const name = formData.get("floating_name");
+    const department = { name };
+    await createDepartment(department);
+    return {
+      status: 302,
+      headers: { location: `/departments` },
+      modal: { show: false },
+    };
   } catch (error) {
     console.log(error, "error");
     alert("There was an error: " + error.message);
@@ -63,8 +39,8 @@ export async function action({ request }) {
   }
 }
 
-export default function Employees() {
-  const { employees, departments } = useLoaderData();
+export default function Departments() {
+  const { departments } = useLoaderData();
   const [showDialog, setShowDialog] = useState(false);
   const actionData = useActionData();
   const open = () => setShowDialog(true);
@@ -78,13 +54,13 @@ export default function Employees() {
     <>
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="flex justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 ">Employees</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 ">Departments</h1>
           <button
             type="button"
             onClick={open}
             className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           >
-            Add employee
+            Add Department
             <svg
               className="rtl:rotate-180 w-3.5 h-3.5 ms-2"
               aria-hidden="true"
@@ -108,57 +84,37 @@ export default function Employees() {
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3">
-                  Name
+                  name
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Department
+                  members
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Salary
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  actions
+                  id
                 </th>
               </tr>
             </thead>
             <tbody>
-              {employees.map((employee) => (
-                <tr key={employee.id} className="bg-white border-b">
+              {departments.map((department) => (
+                <tr key={department.id} className="bg-white border-b">
                   <th
                     scope="row"
-                    className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap "
+                    className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {employee.name}
+                    {department.name}
                   </th>
-                  <td className="px-6 py-4">{employee.departmentName}</td>
-                  <td className="px-6 py-4">{employee.salary}</td>
-                  <td className="flex gap-1 px-6 py-2">
-                    <Link to={`/employee/${employee.id}`}>
-                      <img src={editIcon} alt="edit" width={20} height={20} />
-                    </Link>
-                    <Form method="post" action={action}>
-                      <input type="hidden" name="id" value={employee.id} />
-                      <button name="intent" value="delete">
-                        <img
-                          src={binIcon}
-                          alt="delete"
-                          width={20}
-                          height={20}
-                        />
-                      </button>
-                    </Form>
-                  </td>
+                  <td className="px-6 py-4">{department.members}</td>
+                  <td className="px-6 py-4">{department.id}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      <CreateEmployeeModal
+      <CreateDepartmentsModal
         showDialog={showDialog}
         close={close}
         action={action}
-        departments={departments}
       />
     </>
   );

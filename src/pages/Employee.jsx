@@ -1,17 +1,18 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Form, useActionData, useLoaderData } from "react-router-dom";
 import MDEditor from "@uiw/react-md-editor";
-import { getEmployee, getReport, updateEmployee, updateReport } from "../api";
+import { getDepartments, getEmployee, getReport, updateEmployee, updateReport } from "../api";
 import profileIcon from "../assets/profile.svg";
 import { useEffect, useState } from "react";
 import editIcon from "../assets/edit.svg";
 import UpdateEmployeeModal from "../components/UpdateEmployeeModal";
+import { checkAuthenticity } from "../api/auth";
 
 export const loader = async ({ params }) => {
+  checkAuthenticity();
   const { id } = params;
-  const employee = await getEmployee(id);
-  const report = await getReport(id);
-  return { employee, report: report.report };
+  const [employee, departments, report] = await Promise.all([getEmployee(id), getDepartments(), getReport(id)]) ;
+  return { employee, report: report.report, departments };
 };
 
 export const action = async ({ request, params }) => {
@@ -22,10 +23,11 @@ export const action = async ({ request, params }) => {
     try {
       const name = formData.get("floating_name");
       const department = formData.get("floating_department");
+      console.log(department, '=====');
       const salary = formData.get("floating_salary");
       const employee = {};
       if (name) employee.name = name;
-      if (department) employee.department = department;
+      if (department) employee.departmentId = department;
       if (salary) employee.salary = parseInt(salary, 10);
       if (Object.keys(employee).length === 0) {
         alert("No data to update");
@@ -38,6 +40,7 @@ export const action = async ({ request, params }) => {
         modal: { show: false },
       };
     } catch (error) {
+      console.log(error, '=====');
       alert("unable to update employee");
       return { modal: { show: false } };
     }
@@ -50,7 +53,7 @@ export const action = async ({ request, params }) => {
 };
 
 export default function Employee() {
-  const { employee, report: backendReport } = useLoaderData();
+  const { employee, report: backendReport, departments } = useLoaderData();
   const [report, setReport] = useState(backendReport ?? "");
   const actionData = useActionData();
   console.log(actionData, "actionData");
@@ -62,13 +65,15 @@ export default function Employee() {
     setShowDialog(!!actionData?.modal?.show);
   }, [actionData]);
 
-  console.log(report, "employee");
+  console.log(departments, "employee");
   return (
     <>
       <UpdateEmployeeModal
         showDialog={showDialog}
         close={close}
         action={action}
+        departments={departments}
+        employee={employee}
       />
       <div>
         <div className="max-w-[500px] bg-green-50 mt-20 mx-auto p-8 rounded-lg h-fit">
@@ -80,7 +85,7 @@ export default function Employee() {
               <div>
                 <h1 className="text-2xl font-semibold ">{employee.name}</h1>
                 <p className="relative text-[#9ca3af] -top-1">
-                  {employee.department}
+                  {employee.departmentName}
                 </p>
               </div>
               <button className="h-fit" onClick={open}>
