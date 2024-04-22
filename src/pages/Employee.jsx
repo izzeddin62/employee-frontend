@@ -23,7 +23,6 @@ export const action = async ({ request, params }) => {
     try {
       const name = formData.get("floating_name");
       const department = formData.get("floating_department");
-      console.log(department, '=====');
       const salary = formData.get("floating_salary");
       const employee = {};
       if (name) employee.name = name;
@@ -40,7 +39,6 @@ export const action = async ({ request, params }) => {
         modal: { show: false },
       };
     } catch (error) {
-      console.log(error, '=====');
       alert("unable to update employee");
       return { modal: { show: false } };
     }
@@ -56,7 +54,6 @@ export default function Employee() {
   const { employee, report: backendReport, departments } = useLoaderData();
   const [report, setReport] = useState(backendReport ?? "");
   const actionData = useActionData();
-  console.log(actionData, "actionData");
   const [showDialog, setShowDialog] = useState(false);
   const open = () => setShowDialog(true);
   const close = () => setShowDialog(false);
@@ -65,7 +62,6 @@ export default function Employee() {
     setShowDialog(!!actionData?.modal?.show);
   }, [actionData]);
 
-  console.log(departments, "employee");
   return (
     <>
       <UpdateEmployeeModal
